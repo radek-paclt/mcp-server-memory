@@ -1,12 +1,18 @@
-# Jednoduché Hierarchické Scoping - Implementováno ✅
+# Hierarchické Customer Support Scoping
 
-## 🎯 **Co se změnilo**
+## 🎯 Přehled
 
-Rozšířil jsem současný systém o **volitelné** `customer_id` a `interaction_id` parametry. Vše funguje **zpětně kompatibilně**.
+Rozšířil jsem systém o **hierarchické scoping** pro zákaznickou podporu s automatickou izolací dat na třech úrovních:
 
-## 📋 **Přesně upravené soubory**
+- **Company Level** (bez customer_id, bez interaction_id) - Globální znalosti dostupné všem agentům
+- **Customer Level** (pouze customer_id) - Informace specifické pro zákazníka
+- **Interaction Level** (customer_id + interaction_id) - Poznámky specifické pro konverzaci
 
-### **1. src/types/memory.ts**
+## 📋 Technická Implementace
+
+### Upravené soubory:
+
+#### 1. src/types/memory.ts
 ```typescript
 export interface MemoryContext {
   location?: string;
@@ -31,7 +37,7 @@ export interface MemorySearchParams {
 }
 ```
 
-### **2. src/services/memory.ts**
+#### 2. src/services/memory.ts
 ```typescript
 async searchMemories(params: MemorySearchParams): Promise<Memory[] | CompactMemory[]> {
   const filter: any = { must: [] };
@@ -51,7 +57,7 @@ async searchMemories(params: MemorySearchParams): Promise<Memory[] | CompactMemo
 }
 ```
 
-### **3. src/mcp/tools.ts**
+#### 3. src/mcp/tools.ts
 ```typescript
 // ✅ Všechny context objekty rozšířeny o:
 context: z.object({
@@ -67,9 +73,9 @@ customer_id: z.string().optional().describe('Filter by customer ID'),
 interaction_id: z.string().optional().describe('Filter by interaction ID'),
 ```
 
-## 🚀 **Jak to funguje**
+## 🚀 Použití
 
-### **Současné použití (beze změny)**
+### Zpětná kompatibilita (funguje jak dřív)
 ```typescript
 // Ukládání bez scoping - funguje přesně jak dřív
 await storeMemory({
@@ -85,7 +91,7 @@ await searchMemories({
 });
 ```
 
-### **Nové možnosti s scoping**
+### Nové hierarchické scoping
 ```typescript
 // Company level (bez ID) - dostupné všem
 await storeMemory({
@@ -116,7 +122,7 @@ await storeMemory({
 });
 ```
 
-### **Scoped vyhledávání**
+### Scoped vyhledávání
 ```typescript
 // Vyhledat jen pro konkrétního zákazníka
 await searchMemories({
@@ -137,7 +143,7 @@ await searchMemories({
 });
 ```
 
-## 🛡️ **Automatická Izolace**
+## 🛡️ Automatická Izolace
 
 ```typescript
 // Tyto výsledky jsou automaticky oddělené:
@@ -164,16 +170,9 @@ const interactionContext = await searchMemories({
 });
 ```
 
-## ✅ **100% Zpětná Kompatibilita**
+## 🎯 Customer Support Use Cases
 
-- **Všechny stávající API calls fungují beze změny**
-- **Žádné breaking changes**
-- **Původní memories zůstávají na "company level"**
-- **Nové parametry jsou volitelné**
-
-## 🎯 **Customer Support Use Cases**
-
-### **1. Agent začíná hovor**
+### 1. Agent začíná hovor
 ```typescript
 // Získá kontext zákazníka před hovorem
 const customerHistory = await searchMemories({
@@ -183,7 +182,7 @@ const customerHistory = await searchMemories({
 });
 ```
 
-### **2. Během hovoru - ukládání poznámek**
+### 2. Během hovoru - ukládání poznámek
 ```typescript
 await storeMemory({
   content: "Zákazník zní frustrovaný, problém s fakturací už třetí měsíc",
@@ -197,7 +196,7 @@ await storeMemory({
 });
 ```
 
-### **3. Přenos na specialistu**
+### 3. Přenos na specialistu
 ```typescript
 // Specialist získá kompletní kontext
 const fullContext = await searchMemories({
@@ -207,7 +206,7 @@ const fullContext = await searchMemories({
 });
 ```
 
-### **4. Týmové znalosti**
+### 4. Týmové znalosti
 ```typescript
 // Uložení řešení pro celý tým (company level)
 await storeMemory({
@@ -221,14 +220,24 @@ await storeMemory({
 });
 ```
 
-## 🔧 **Implementace je Kompletní**
+## ✅ Výhody
 
-Systém je **ready to use** s minimálními změnami:
+- **🔒 Automatická Izolace**: Data zákazníků zůstávají oddělená
+- **📈 Kontextová Relevance**: Správné informace ve správný čas
+- **🧠 Týmové Učení**: Firemní znalosti rostou s každým vyřešením
+- **⚡ Rychlý Kontext**: Okamžitý přístup k historii zákazníka
+- **🔄 Dědičnost**: Širší znalosti se automaticky zahrnují když jsou relevantní
+- **100% Zpětná Kompatibilita**: Žádné breaking changes
 
-1. ✅ **Types rozšířeny** o customer_id/interaction_id
-2. ✅ **Memory service** podporuje scope filtering  
-3. ✅ **MCP tools** mají nové volitelné parametry
-4. ✅ **Zpětná kompatibilita** zachována
-5. ✅ **Zero breaking changes**
+## 🔧 Stav Implementace
+
+✅ **Kompletně implementováno a testováno**
+
+1. ✅ Types rozšířeny o customer_id/interaction_id
+2. ✅ Memory service podporuje scope filtering  
+3. ✅ MCP tools mají nové volitelné parametry
+4. ✅ Zpětná kompatibilita zachována
+5. ✅ Zero breaking changes
+6. ✅ README dokumentace aktualizována
 
 **Jednoduše začni používat customer_id a interaction_id v context objektech a automaticky získáš hierarchické scoping!**

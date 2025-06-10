@@ -1,9 +1,8 @@
-<<<<<<< HEAD
 {
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "dom"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -17,26 +16,5 @@
     "moduleResolution": "node"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-=======
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "commonjs",
-    "lib": ["ES2022"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "moduleResolution": "node"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
->>>>>>> origin/main
+  "exclude": ["node_modules", "dist", "src/optimization/**/*", "src/services/memory-enhanced.ts", "src/services/customer-support-memory.ts", "src/services/memory-type-classifier.ts"]
 }
