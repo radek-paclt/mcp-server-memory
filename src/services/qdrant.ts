@@ -4,6 +4,7 @@ import { Memory } from '../types/memory';
 import {
   qdrantOperationsCounter,
   qdrantOperationDuration,
+  qdrantOperationDurationMs,
   qdrantConnectionsGauge,
 } from '../metrics/custom-metrics';
 
@@ -44,7 +45,7 @@ export class QdrantService {
       throw error;
     } finally {
       const duration = (Date.now() - startTime) / 1000;
-      qdrantOperationDuration.record(duration, { operation: 'initialize' });
+      qdrantOperationDurationMs.record(Date.now() - startTime, { operation: 'initialize' });
     }
   }
 
@@ -70,7 +71,7 @@ export class QdrantService {
       throw error;
     } finally {
       const duration = (Date.now() - startTime) / 1000;
-      qdrantOperationDuration.record(duration, { operation: 'upsert' });
+      qdrantOperationDurationMs.record(Date.now() - startTime, { operation: 'upsert' });
     }
   }
 

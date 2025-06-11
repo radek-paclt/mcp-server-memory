@@ -18,6 +18,10 @@ import {
   mcpRequestsCounter,
   mcpRequestDuration,
   mcpActiveConnectionsGauge,
+  mcpInferenceCounter,
+  mcpInferenceDurationMs,
+  mcpInferenceErrorsCounter,
+  mcpInferenceTokensCounter,
 } from './metrics/custom-metrics';
 
 class MemoryMCPServer {
@@ -53,9 +57,13 @@ class MemoryMCPServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const { name, arguments: args } = request.params;
       
-      // Track MCP request metrics
+      // Track MCP request metrics (seconds) 
       const startTime = Date.now();
       mcpRequestsCounter.add(1, { tool: name });
+      
+      // Track inference metrics (milliseconds)
+      const inferenceStartTime = Date.now();
+      mcpInferenceCounter.add(1, { tool: name });
 
       try {
         switch (name) {
@@ -342,6 +350,7 @@ class MemoryMCPServer {
       } catch (error) {
         // Track errors
         memoryErrorsCounter.add(1, { tool: name, error_type: error instanceof Error ? error.constructor.name : 'Unknown' });
+        mcpInferenceErrorsCounter.add(1, { tool: name, error_type: error instanceof Error ? error.constructor.name : 'Unknown' });
         
         return {
           content: [
@@ -352,9 +361,13 @@ class MemoryMCPServer {
           ],
         };
       } finally {
-        // Track request duration
+        // Track request duration (seconds)
         const duration = (Date.now() - startTime) / 1000;
         mcpRequestDuration.record(duration, { tool: name });
+        
+        // Track inference duration (milliseconds)
+        const inferenceDurationMs = Date.now() - inferenceStartTime;
+        mcpInferenceDurationMs.record(inferenceDurationMs, { tool: name });
       }
     });
   }

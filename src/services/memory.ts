@@ -6,6 +6,7 @@ import { ChunkingService, ChunkingOptions, TextChunk } from './chunking';
 import {
   memoryOperationsCounter,
   memoryOperationDuration,
+  memoryOperationDurationMs,
   memoryErrorsCounter,
 } from '../metrics/custom-metrics';
 
@@ -106,7 +107,7 @@ export class MemoryService {
       throw error;
     } finally {
       const duration = (Date.now() - startTime) / 1000;
-      memoryOperationDuration.record(duration, { operation: 'create_chunked', type });
+      memoryOperationDurationMs.record(Date.now() - startTime, { operation: 'create_chunked', type });
     }
   }
 
@@ -169,7 +170,7 @@ export class MemoryService {
       throw error;
     } finally {
       const duration = (Date.now() - startTime) / 1000;
-      memoryOperationDuration.record(duration, { operation: 'create', type });
+      memoryOperationDurationMs.record(Date.now() - startTime, { operation: 'create', type });
     }
   }
 
@@ -330,7 +331,7 @@ export class MemoryService {
       throw error;
     } finally {
       const duration = (Date.now() - startTime) / 1000;
-      memoryOperationDuration.record(duration, { operation: 'search' });
+      memoryOperationDurationMs.record(Date.now() - startTime, { operation: 'search' });
     }
   }
 

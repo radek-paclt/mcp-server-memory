@@ -3,7 +3,10 @@ import { config } from '../config/environment';
 import {
   openaiEmbeddingRequestsCounter,
   openaiEmbeddingDuration,
+  openaiEmbeddingDurationMs,
   openaiEmbeddingTokensCounter,
+  openaiChatCompletionCounter,
+  openaiChatCompletionDurationMs,
 } from '../metrics/custom-metrics';
 
 export class OpenAIService {
@@ -31,7 +34,7 @@ export class OpenAIService {
       throw error;
     } finally {
       const duration = (Date.now() - startTime) / 1000;
-      openaiEmbeddingDuration.record(duration, { operation: 'single_embedding' });
+      openaiEmbeddingDurationMs.record(Date.now() - startTime, { operation: 'single_embedding' });
     }
   }
 
@@ -51,11 +54,14 @@ export class OpenAIService {
       throw error;
     } finally {
       const duration = (Date.now() - startTime) / 1000;
-      openaiEmbeddingDuration.record(duration, { operation: 'batch_embedding' });
+      openaiEmbeddingDurationMs.record(Date.now() - startTime, { operation: 'batch_embedding' });
     }
   }
 
   async extractKeywords(text: string): Promise<string[]> {
+    const startTime = Date.now();
+    openaiChatCompletionCounter.add(1, { operation: 'extract_keywords' });
+    
     try {
       const response = await this.client.chat.completions.create({
         model: 'gpt-4o',
@@ -77,10 +83,15 @@ export class OpenAIService {
       return keywords;
     } catch (error) {
       return [];
+    } finally {
+      openaiChatCompletionDurationMs.record(Date.now() - startTime, { operation: 'extract_keywords' });
     }
   }
 
   async generateSummary(text: string): Promise<string> {
+    const startTime = Date.now();
+    openaiChatCompletionCounter.add(1, { operation: 'generate_summary' });
+    
     try {
       const response = await this.client.chat.completions.create({
         model: 'gpt-4o',
@@ -102,10 +113,15 @@ export class OpenAIService {
     } catch (error) {
       // Fallback to truncation
       return text.length > 150 ? text.substring(0, 147) + '...' : text;
+    } finally {
+      openaiChatCompletionDurationMs.record(Date.now() - startTime, { operation: 'generate_summary' });
     }
   }
 
   async analyzeEmotion(text: string): Promise<number> {
+    const startTime = Date.now();
+    openaiChatCompletionCounter.add(1, { operation: 'analyze_emotion' });
+    
     try {
       const response = await this.client.chat.completions.create({
         model: 'gpt-4o',
@@ -127,10 +143,15 @@ export class OpenAIService {
       return Math.max(-1, Math.min(1, valence));
     } catch (error) {
       return 0;
+    } finally {
+      openaiChatCompletionDurationMs.record(Date.now() - startTime, { operation: 'analyze_emotion' });
     }
   }
 
   async summarizeTexts(texts: string[]): Promise<string> {
+    const startTime = Date.now();
+    openaiChatCompletionCounter.add(1, { operation: 'summarize_texts' });
+    
     try {
       const response = await this.client.chat.completions.create({
         model: 'gpt-4o',
@@ -151,6 +172,8 @@ export class OpenAIService {
       return response.choices[0].message.content || 'Summary generation failed';
     } catch (error) {
       return `Combined memories: ${texts.map(t => t.substring(0, 50)).join('; ')}...`;
+    } finally {
+      openaiChatCompletionDurationMs.record(Date.now() - startTime, { operation: 'summarize_texts' });
     }
   }
 }
