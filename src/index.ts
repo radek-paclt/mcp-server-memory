@@ -156,7 +156,7 @@ class MemoryMCPServer {
             const memory = await this.memoryService.updateMemory(parsed.id, {
               content: parsed.content,
               importance: parsed.importance,
-              context: parsed.context,
+              ...(parsed.context && { context: parsed.context as any }),
               metadata: parsed.metadata,
             });
             return {

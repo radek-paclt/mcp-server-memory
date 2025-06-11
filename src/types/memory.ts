@@ -23,6 +23,12 @@ export enum MemoryType {
   WORKING = 'working', // Short-term working memory
 }
 
+export enum MemoryScope {
+  GENERAL = 'general',      // Universal memories (visible to everyone)
+  CUSTOMER = 'customer',    // Customer-specific memories
+  INTERACTION = 'interaction' // Interaction/session-specific memories
+}
+
 export interface MemoryContext {
   location?: string;
   people?: string[];
@@ -30,7 +36,8 @@ export interface MemoryContext {
   activity?: string;
   tags?: string[];
   source?: string;
-  // Customer support scoping
+  // Scoping system
+  scope: MemoryScope;
   customer_id?: string;
   interaction_id?: string;
   // Chunking-related fields

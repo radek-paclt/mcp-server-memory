@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Memory, MemoryType, MemorySearchParams, MemoryContext, CompactMemory } from '../types/memory';
+import { Memory, MemoryType, MemorySearchParams, MemoryContext, CompactMemory, MemoryScope } from '../types/memory';
 import { QdrantService } from './qdrant';
 import { OpenAIService } from './openai';
 import { ChunkingService, ChunkingOptions, TextChunk } from './chunking';
@@ -70,7 +70,7 @@ export class MemoryService {
     // Create memories for each chunk
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-      const chunkContext: MemoryContext = {
+      const chunkContext: Partial<MemoryContext> = {
         ...context,
         chunkIndex: i,
         chunkOf: parentMemory.id,
@@ -134,6 +134,9 @@ export class MemoryService {
     // Generate summary if not provided
     const memorySummary = summary || await this.generateSummary(content);
     
+    // Determine scope based on context
+    const scope = this.determineScope(context);
+    
     const memory: Memory = {
       id: uuidv4(),
       summary: memorySummary,
@@ -144,6 +147,7 @@ export class MemoryService {
       emotionalValence: await this.openai.analyzeEmotion(content),
       associations: [],
       context: {
+        scope,
         tags: await this.openai.extractKeywords(content),
         ...context,
       },
@@ -254,13 +258,16 @@ export class MemoryService {
       });
     }
 
-    // Customer support scoping filters
-    if (params.customer_id) {
-      filter.must.push({ key: 'context.customer_id', match: { value: params.customer_id } });
-    }
-
-    if (params.interaction_id) {
-      filter.must.push({ key: 'context.interaction_id', match: { value: params.interaction_id } });
+    // Scope filtering logic
+    const scopeFilter = this.buildScopeFilter(params.customer_id, params.interaction_id);
+    if (scopeFilter) {
+      if (scopeFilter.should) {
+        // Multiple scope options - use should
+        filter.should = scopeFilter.should;
+      } else {
+        // Single scope - use must
+        filter.must.push(scopeFilter);
+      }
     }
 
     let memories: Memory[];
@@ -438,7 +445,7 @@ export class MemoryService {
 
     let consolidatedContent: string;
     let consolidatedImportance: number;
-    let consolidatedContext: MemoryContext = {};
+    let consolidatedContext: Partial<MemoryContext> = {};
 
     switch (strategy) {
       case 'merge_content':
@@ -706,6 +713,62 @@ export class MemoryService {
           });
         }
       }
+    }
+  }
+
+  /**
+   * Determine memory scope based on context
+   */
+  private determineScope(context?: Partial<MemoryContext>): MemoryScope {
+    if (context?.interaction_id && context?.customer_id) {
+      return MemoryScope.INTERACTION;
+    }
+    if (context?.customer_id) {
+      return MemoryScope.CUSTOMER;
+    }
+    return MemoryScope.GENERAL;
+  }
+
+  /**
+   * Build scope filter for Qdrant search
+   */
+  private buildScopeFilter(customer_id?: string, interaction_id?: string): any {
+    if (customer_id && interaction_id) {
+      // Interaction scope: see interaction + customer + general
+      return {
+        should: [
+          { key: 'context.scope', match: { value: MemoryScope.GENERAL } },
+          { 
+            must: [
+              { key: 'context.scope', match: { value: MemoryScope.CUSTOMER } },
+              { key: 'context.customer_id', match: { value: customer_id } }
+            ]
+          },
+          {
+            must: [
+              { key: 'context.scope', match: { value: MemoryScope.INTERACTION } },
+              { key: 'context.customer_id', match: { value: customer_id } },
+              { key: 'context.interaction_id', match: { value: interaction_id } }
+            ]
+          }
+        ]
+      };
+    } else if (customer_id) {
+      // Customer scope: see customer + general
+      return {
+        should: [
+          { key: 'context.scope', match: { value: MemoryScope.GENERAL } },
+          { 
+            must: [
+              { key: 'context.scope', match: { value: MemoryScope.CUSTOMER } },
+              { key: 'context.customer_id', match: { value: customer_id } }
+            ]
+          }
+        ]
+      };
+    } else {
+      // General scope: see only general
+      return { key: 'context.scope', match: { value: MemoryScope.GENERAL } };
     }
   }
 }
