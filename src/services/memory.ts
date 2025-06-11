@@ -3,6 +3,11 @@ import { Memory, MemoryType, MemorySearchParams, MemoryContext, CompactMemory } 
 import { QdrantService } from './qdrant';
 import { OpenAIService } from './openai';
 import { ChunkingService, ChunkingOptions, TextChunk } from './chunking';
+import {
+  memoryOperationsCounter,
+  memoryOperationDuration,
+  memoryErrorsCounter,
+} from '../metrics/custom-metrics';
 
 export class MemoryService {
   private qdrant: QdrantService;
@@ -27,6 +32,10 @@ export class MemoryService {
     chunkingOptions?: ChunkingOptions,
     summary?: string
   ): Promise<Memory[]> {
+    const startTime = Date.now();
+    memoryOperationsCounter.add(1, { operation: 'create_chunked', type });
+    
+    try {
     // Use semantic chunking by default for long content
     const options: ChunkingOptions = chunkingOptions || {
       method: 'semantic',
@@ -92,6 +101,13 @@ export class MemoryService {
     }
     
     return memories;
+    } catch (error) {
+      memoryErrorsCounter.add(1, { operation: 'create_chunked', error_type: error instanceof Error ? error.constructor.name : 'Unknown' });
+      throw error;
+    } finally {
+      const duration = (Date.now() - startTime) / 1000;
+      memoryOperationDuration.record(duration, { operation: 'create_chunked', type });
+    }
   }
 
   async createMemory(
@@ -101,6 +117,10 @@ export class MemoryService {
     importance?: number,
     summary?: string
   ): Promise<Memory> {
+    const startTime = Date.now();
+    memoryOperationsCounter.add(1, { operation: 'create', type });
+    
+    try {
     // Validate content
     if (!content || content.trim().length === 0) {
       throw new Error('Memory content cannot be empty');
@@ -140,6 +160,13 @@ export class MemoryService {
     await this.updateAssociations(memory);
 
     return memory;
+    } catch (error) {
+      memoryErrorsCounter.add(1, { operation: 'create', error_type: error instanceof Error ? error.constructor.name : 'Unknown' });
+      throw error;
+    } finally {
+      const duration = (Date.now() - startTime) / 1000;
+      memoryOperationDuration.record(duration, { operation: 'create', type });
+    }
   }
 
   async searchChunkedMemories(params: MemorySearchParams & { reconstructChunks?: boolean }): Promise<Memory[] | CompactMemory[]> {
@@ -194,6 +221,10 @@ export class MemoryService {
   }
 
   async searchMemories(params: MemorySearchParams): Promise<Memory[] | CompactMemory[]> {
+    const startTime = Date.now();
+    memoryOperationsCounter.add(1, { operation: 'search', type: params.type || 'all' });
+    
+    try {
     const filter: any = {
       must: [],
     };
@@ -287,6 +318,13 @@ export class MemoryService {
     }
 
     return memories;
+    } catch (error) {
+      memoryErrorsCounter.add(1, { operation: 'search', error_type: error instanceof Error ? error.constructor.name : 'Unknown' });
+      throw error;
+    } finally {
+      const duration = (Date.now() - startTime) / 1000;
+      memoryOperationDuration.record(duration, { operation: 'search' });
+    }
   }
 
   private toCompactMemories(memories: Memory[]): CompactMemory[] {

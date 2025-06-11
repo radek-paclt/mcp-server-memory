@@ -10,6 +10,15 @@ import { MemoryType } from './types/memory';
 import { tools } from './mcp/tools';
 import { config } from './config/environment';
 import { zodToJsonSchema } from './utils/zodToJsonSchema';
+import { initializeTelemetry } from './config/telemetry';
+import {
+  memoryOperationsCounter,
+  memoryOperationDuration,
+  memoryErrorsCounter,
+  mcpRequestsCounter,
+  mcpRequestDuration,
+  mcpActiveConnectionsGauge,
+} from './metrics/custom-metrics';
 
 class MemoryMCPServer {
   private server: Server;
@@ -43,6 +52,10 @@ class MemoryMCPServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const { name, arguments: args } = request.params;
+      
+      // Track MCP request metrics
+      const startTime = Date.now();
+      mcpRequestsCounter.add(1, { tool: name });
 
       try {
         switch (name) {
@@ -327,6 +340,9 @@ class MemoryMCPServer {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
+        // Track errors
+        memoryErrorsCounter.add(1, { tool: name, error_type: error instanceof Error ? error.constructor.name : 'Unknown' });
+        
         return {
           content: [
             {
@@ -335,6 +351,10 @@ class MemoryMCPServer {
             },
           ],
         };
+      } finally {
+        // Track request duration
+        const duration = (Date.now() - startTime) / 1000;
+        mcpRequestDuration.record(duration, { tool: name });
       }
     });
   }
@@ -354,9 +374,26 @@ class MemoryMCPServer {
   }
 
   async start() {
+    // Initialize telemetry
+    initializeTelemetry();
+    
     await this.memoryService.initialize();
     const transport = new StdioServerTransport();
+    
+    // Track active connection
+    mcpActiveConnectionsGauge.add(1);
+    
     await this.server.connect(transport);
+    
+    // Handle disconnection
+    process.on('SIGINT', () => {
+      mcpActiveConnectionsGauge.add(-1);
+      process.exit(0);
+    });
+    process.on('SIGTERM', () => {
+      mcpActiveConnectionsGauge.add(-1);
+      process.exit(0);
+    });
   }
 }
 

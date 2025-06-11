@@ -1,6 +1,11 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { config, VECTOR_DIMENSION, DEFAULT_SIMILARITY_THRESHOLD } from '../config/environment';
 import { Memory } from '../types/memory';
+import {
+  qdrantOperationsCounter,
+  qdrantOperationDuration,
+  qdrantConnectionsGauge,
+} from '../metrics/custom-metrics';
 
 export class QdrantService {
   private client: QdrantClient;
@@ -16,7 +21,11 @@ export class QdrantService {
   }
 
   async initialize(): Promise<void> {
+    const startTime = Date.now();
+    qdrantOperationsCounter.add(1, { operation: 'initialize' });
+    
     try {
+      qdrantConnectionsGauge.add(1);
       const collections = await this.client.getCollections();
       const exists = collections.collections.some(
         (col) => col.name === this.collectionName
@@ -31,11 +40,19 @@ export class QdrantService {
         });
       }
     } catch (error) {
+      qdrantConnectionsGauge.add(-1);
       throw error;
+    } finally {
+      const duration = (Date.now() - startTime) / 1000;
+      qdrantOperationDuration.record(duration, { operation: 'initialize' });
     }
   }
 
   async upsertMemory(memory: Memory, embedding: number[]): Promise<void> {
+    const startTime = Date.now();
+    qdrantOperationsCounter.add(1, { operation: 'upsert' });
+    
+    try {
     await this.client.upsert(this.collectionName, {
       points: [
         {
@@ -49,6 +66,12 @@ export class QdrantService {
         },
       ],
     });
+    } catch (error) {
+      throw error;
+    } finally {
+      const duration = (Date.now() - startTime) / 1000;
+      qdrantOperationDuration.record(duration, { operation: 'upsert' });
+    }
   }
 
   async searchSimilar(

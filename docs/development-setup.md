@@ -37,7 +37,7 @@ The `.env.development` file is already configured for local development:
 ```env
 # Qdrant runs on localhost
 QDRANT_URL=http://localhost:6333
-QDRANT_COLLECTION_NAME=human_memories_dev  # Separate from production
+QDRANT_COLLECTION_NAME=memories  # Separate from production
 
 # Development-specific settings
 NODE_ENV=development
@@ -80,7 +80,7 @@ claude -p "Store memory with full context: {\"customer_id\": \"dev_123\", \"inte
 
 ## Development Notes
 
-- **Development collection**: Uses `human_memories_dev` to avoid conflicts with production
+- **Development collection**: Uses `memories` to avoid conflicts with production
 - **Debug logging**: Enabled in development mode
 - **Auto-reload**: Uses `tsx` for TypeScript hot reloading
 - **Separate storage**: Qdrant data stored in `qdrant_storage_dev/`

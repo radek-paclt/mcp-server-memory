@@ -1,5 +1,10 @@
 import OpenAI from 'openai';
 import { config } from '../config/environment';
+import {
+  openaiEmbeddingRequestsCounter,
+  openaiEmbeddingDuration,
+  openaiEmbeddingTokensCounter,
+} from '../metrics/custom-metrics';
 
 export class OpenAIService {
   private client: OpenAI;
@@ -11,28 +16,42 @@ export class OpenAIService {
   }
 
   async createEmbedding(text: string): Promise<number[]> {
+    const startTime = Date.now();
+    openaiEmbeddingRequestsCounter.add(1, { operation: 'single_embedding' });
+    
     try {
       const response = await this.client.embeddings.create({
         model: config.OPENAI_MODEL,
         input: text,
       });
 
+      openaiEmbeddingTokensCounter.add(response.usage?.total_tokens || 0);
       return response.data[0].embedding;
     } catch (error) {
       throw error;
+    } finally {
+      const duration = (Date.now() - startTime) / 1000;
+      openaiEmbeddingDuration.record(duration, { operation: 'single_embedding' });
     }
   }
 
   async createEmbeddings(texts: string[]): Promise<number[][]> {
+    const startTime = Date.now();
+    openaiEmbeddingRequestsCounter.add(1, { operation: 'batch_embedding' });
+    
     try {
       const response = await this.client.embeddings.create({
         model: config.OPENAI_MODEL,
         input: texts,
       });
 
+      openaiEmbeddingTokensCounter.add(response.usage?.total_tokens || 0);
       return response.data.map((item) => item.embedding);
     } catch (error) {
       throw error;
+    } finally {
+      const duration = (Date.now() - startTime) / 1000;
+      openaiEmbeddingDuration.record(duration, { operation: 'batch_embedding' });
     }
   }
 
