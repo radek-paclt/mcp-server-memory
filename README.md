@@ -2,23 +2,23 @@
 
 A human-like memory system using Qdrant vector database and OpenAI embeddings, accessible through the Model Context Protocol (MCP).
 
-## 🔄 Automatické aktualizace
+## 🔄 Automatic Updates
 
-### Rychlá aktualizace
+### Quick Update
 ```bash
 ./update.sh
-# nebo
+# or
 npm run update
 ```
 
-### Automatické sledování aktualizací
+### Automatic Update Monitoring
 ```bash
 ./watch-updates.sh
-# nebo
+# or
 npm run watch-updates
 ```
 
-Skript kontroluje nové verze každých 5 minut a upozorní vás.
+The script checks for new versions every 5 minutes and notifies you.
 
 ## Features
 

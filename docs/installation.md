@@ -58,7 +58,7 @@ Edit `.env` with your settings:
 # For local Qdrant
 QDRANT_URL=http://localhost:6333
 QDRANT_API_KEY=
-QDRANT_COLLECTION_NAME=human_memories
+QDRANT_COLLECTION_NAME=memories
 
 # For Qdrant Cloud
 # QDRANT_URL=https://your-cluster-url.qdrant.io:6333

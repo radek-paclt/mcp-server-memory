@@ -90,7 +90,7 @@ npm run build
 
 ### Collection already exists
 
-**Error**: `Collection human_memories already exists`
+**Error**: `Collection memories already exists`
 
 **Solution**: This is normal - the server checks and reuses existing collections.
 
@@ -203,7 +203,7 @@ npm run build
 1. **Optimize Qdrant**:
    ```bash
    # Check collection size
-   curl http://localhost:6333/collections/human_memories
+   curl http://localhost:6333/collections/memories
    ```
 
 2. **Reduce search scope**:
@@ -243,7 +243,7 @@ npm run build
 
 2. Verify collection wasn't recreated:
    ```bash
-   curl http://localhost:6333/collections/human_memories/points/count
+   curl http://localhost:6333/collections/memories/points/count
    ```
 
 3. Check if using correct collection name

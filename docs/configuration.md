@@ -12,7 +12,7 @@ The server uses environment variables for configuration. These can be set in a `
 |----------|-------------|---------|----------|
 | `QDRANT_URL` | Qdrant server URL | - | Yes |
 | `QDRANT_API_KEY` | Qdrant API key (if using cloud) | - | No |
-| `QDRANT_COLLECTION_NAME` | Collection name for memories | `human_memories` | Yes |
+| `QDRANT_COLLECTION_NAME` | Collection name for memories | `memories` | Yes |
 | `OPENAI_API_KEY` | OpenAI API key for embeddings | - | Yes |
 | `OPENAI_MODEL` | OpenAI embedding model | `text-embedding-3-small` | Yes |
 | `MCP_SERVER_NAME` | Name of the MCP server | `memory-server` | Yes |
