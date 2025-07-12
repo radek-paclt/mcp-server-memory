@@ -54,6 +54,9 @@ memories-backup*.json
 test-output.log
 server.log
 
+# MCP configuration with secrets
+claude-code-mcp.json
+
 # TypeScript
 *.tsbuildinfo
 

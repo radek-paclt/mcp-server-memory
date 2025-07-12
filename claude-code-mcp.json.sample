@@ -1,14 +1,14 @@
 {
   "mcpServers": {
-    "memory": {
+    "memory-server": {
       "command": "node",
       "args": ["/home/klaun/development/mcp-server-memory/dist/index.js"],
       "env": {
-        "NODE_ENV": "production",
+        "NODE_ENV": "development",
         "QDRANT_URL": "http://localhost:6333",
         "QDRANT_API_KEY": "",
-        "QDRANT_COLLECTION_NAME": "human_memories",
-        "OPENAI_API_KEY": "",
+        "QDRANT_COLLECTION_NAME": "memories",
+        "OPENAI_API_KEY": "sk-proj-YOUR_OPENAI_API_KEY_HERE",
         "OPENAI_MODEL": "text-embedding-3-small",
         "MCP_SERVER_NAME": "memory-server",
         "MCP_SERVER_PORT": "3000"
